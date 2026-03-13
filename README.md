@@ -104,9 +104,3 @@ El uso de ACK manual nos garantiza que las transacciones no se pierdan si hay un
 
 ## Demostración
 El video de demostración:
-
-1. Consumo del endpoint GET /transacciones
-2. Publicación de transacciones en RabbitMQ
-3. Creación de colas dinámicas
-4. Consumo de mensajes
-5. Envío de transacciones al endpoint POST
