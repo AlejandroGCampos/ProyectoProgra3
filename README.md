@@ -1,5 +1,7 @@
 # ProyectoProgra3
 # Procesamiento de Transacciones Bancarias con RabbitMQ
+Link video explicativo (también esta al final): https://drive.google.com/file/d/1Vj6IV18CzzAt9l9xeyaZJDkmMtcA4cQR/view?usp=sharing
+
 ---
 ## Descripción
 Este proyecto implementa un sistema distribuido para el procesamiento de transacciones bancarias usando **RabbitMQ**, **Java** y **Maven**, aplicando el patrón **Producer–Consumer**.
@@ -103,4 +105,4 @@ El uso de ACK manual nos garantiza que las transacciones no se pierdan si hay un
 ---
 
 ## Demostración
-El video de demostración:
+El video de demostración:https://drive.google.com/file/d/1Vj6IV18CzzAt9l9xeyaZJDkmMtcA4cQR/view?usp=sharing
