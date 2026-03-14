@@ -38,23 +38,50 @@ public class Productor {
             
             LoteTransaccion lote = mapper.readValue(response.body(), LoteTransaccion.class);
 
-            for (Transaccion tx : lote.transacciones) {
-                String bank = tx.bancoDestino.toUpperCase().trim();
-                
-                channel.queueDeclare(bank, true, false, false, null);
+            for (Transaccion tx : lote.transacciones) { //modificaciones para el parcial acerca del monto
+
+                String colaDestino;
+                String estado;
+
+                // VALIDACION DEL MONTO
+                if (tx.monto > 4000) { //monto mayor a 4000.00
+
+                	colaDestino = tx.bancoDestino.toUpperCase().trim(); //mayor a 4000 ira al post
+                    estado = "ACEPTADO";
+
+                } else {
+
+                	colaDestino = "cola_rechazados"; //menor o igual a 4000 sera rachazada
+                    estado = "RECHAZADO";
+                }
+
+                // CREAR COLA SI NO EXISTE
+                channel.queueDeclare(colaDestino, true, false, false, null);
 
                 String payload = mapper.writeValueAsString(tx);
-                
-                channel.basicPublish("", bank, MessageProperties.PERSISTENT_TEXT_PLAIN, payload.getBytes());
 
-                System.out.println("Publicada transacción " + tx.idTransaccion + " en cola: " + bank);
+                // PUBLICAR MENSAJE
+                channel.basicPublish(
+                        "",
+                        colaDestino,
+                        MessageProperties.PERSISTENT_TEXT_PLAIN,
+                        payload.getBytes()
+                );
+
+                // LOG REQUERIDO
+                System.out.println(
+                        "ID: " + tx.idTransaccion +
+                        " | Monto: Q" + tx.monto +
+                        " | Estado: " + estado +
+                        " | Cola destino: " + colaDestino
+                );
             }
 
             System.out.println("Proceso terminado. Lote enviado.");
 
         } catch (Exception ex) {
+
             System.err.println("Error: " + ex.getMessage());
         }
     }
-
 }

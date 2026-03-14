@@ -14,7 +14,8 @@ import java.util.UUID;
 public class Consumidor {
 
 	private static final String[] BANK_QUEUES = {"BANRURAL", "GYT", "BAC", "BI"};
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String REJECT_QUEUE = "colas_rechazados"; //cola para los rechazos
+	private static final ObjectMapper mapper = new ObjectMapper();
     private static final HttpClient client = HttpClient.newHttpClient();
 
     public static void main(String[] args) throws Exception {
@@ -27,6 +28,7 @@ public class Consumidor {
         Channel channel = connection.createChannel();
 
         channel.basicQos(1);
+        channel.queueDeclare(REJECT_QUEUE, true, false, false, null);
 
         for (String queue : BANK_QUEUES) {
             channel.queueDeclare(queue, true, false, false, null);
@@ -43,13 +45,27 @@ public class Consumidor {
                     
                     String jsonModificado = mapper.writeValueAsString(tx);
                     
-                    if (postToApi(jsonModificado)) {
-                        System.out.println("[OK] Transacción guardada para AlejandroCampos: " + tx.idTransaccion);
-                        
-                        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-                    } else {
-                        System.err.println("[FALLO] API otrogada tuvo error en respuesta 200. El mensaje sigue en RabbitMQ.");
+                    if (tx.monto > 4000.00) { //modificaciones por el monto
+                    	
+                    	if (postToApi(jsonModificado)) {
+                            System.out.println("[OK] Transacción guardada para AlejandroCampos: " + tx.idTransaccion);
+                    	
+                    	}else {
+                    		System.err.println("[FALLO] API otrogada tuvo error en respuesta 200. El mensaje sigue en RabbitMQ.");
+                    	}
+                            
+                    }else {
+                        channel.basicPublish(
+                                "",
+                                REJECT_QUEUE,
+                                null,
+                                jsonModificado.getBytes(StandardCharsets.UTF_8)
+                        );
+
+                        System.out.println("Transacción enviada a cola_rechazadas: " + tx.idTransaccion);
+
                     }
+                        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
                 } catch (Exception ex) {
                     System.err.println("Error procesando mensaje: " + ex.getMessage());
                 }
